@@ -41,6 +41,8 @@ static struct spi_driver nrf24l01_driver = {
         },
 };
 
+static struct spi_device *nrf24l01_device;
+
 static int remove_existing_spi_device(int bus_num, int cs_pin)
 {
   struct spi_master *master = spi_busnum_to_master(bus_num);
@@ -84,8 +86,8 @@ static int nrf24l01_init(void)
   nrf24l01_board_info.bus_num = spi_busnum;
   nrf24l01_board_info.chip_select = spi_cs_pin;
 
-  struct spi_device *dev = spi_new_device(master, &nrf24l01_board_info);
-  if (dev == NULL) {
+  nrf24l01_device = spi_new_device(master, &nrf24l01_board_info);
+  if (nrf24l01_device == NULL) {
     pr_err("%s: spi_new_device error", DRIVER_NAME);
     spi_unregister_driver(&nrf24l01_driver);
     return -ENODEV;
@@ -97,6 +99,9 @@ static int nrf24l01_init(void)
 static void nrf24l01_exit(void)
 {
   pr_info("%s: exit", DRIVER_NAME);
+
+  spi_unregister_device(nrf24l01_device);
+  spi_unregister_driver(&nrf24l01_driver);
 }
 
 module_init(nrf24l01_init);
