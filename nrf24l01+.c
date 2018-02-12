@@ -14,18 +14,19 @@
 
 static int spi_busnum = 0;
 static int spi_cs_pin = 0;
+module_param(spi_busnum, int, S_IRUSR | S_IRGRP | S_IROTH);
 module_param(spi_cs_pin, int, S_IRUSR | S_IRGRP | S_IROTH);
 
-static int remove_existing_spi_device(int spi_cs_pin)
+static int remove_existing_spi_device(int bus_num, int cs_pin)
 {
-  struct spi_master *master = spi_busnum_to_master(spi_busnum);
+  struct spi_master *master = spi_busnum_to_master(bus_num);
   if (master == NULL) {
     pr_err("%s: spi_master not found", DRIVER_NAME);
     return -ENODEV;
   }
 
   char name[128];
-  snprintf(name, sizeof(name), "%s.%u", dev_name(&master->dev), spi_cs_pin);
+  snprintf(name, sizeof(name), "%s.%u", dev_name(&master->dev), cs_pin);
 
   struct device *spidev = bus_find_device_by_name(&spi_bus_type, NULL, name);
   if (spidev == NULL) {
@@ -42,7 +43,7 @@ static int nrf24l01_init(void)
 {
   pr_info("%s: initalize", DRIVER_NAME);
 
-  int err = remove_existing_spi_device(spi_cs_pin);
+  int err = remove_existing_spi_device(spi_busnum, spi_cs_pin);
   if (err != OK) {
     pr_err("%s: remove_existing_spi_device error", DRIVER_NAME);
     return err;
