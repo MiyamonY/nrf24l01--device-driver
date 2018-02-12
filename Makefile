@@ -10,7 +10,7 @@ $(TARGET):
 	make -C $(KPATH) M=$(PWD) modules
 
 ins:
-	insmod $(TARGET)
+	insmod $(TARGET) spi_cs_pin=0
 
 rm:
 	rmmod $(TARGET:.ko=)

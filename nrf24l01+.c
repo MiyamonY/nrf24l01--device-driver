@@ -9,6 +9,9 @@
 
 #define DRIVER_NAME "nrf24l01"
 
+static int spi_cs_pin = 0;
+module_param(spi_cs_pin, int, S_IRUSR | S_IRGRP | S_IROTH);
+
 static int nrf24l01_init(void)
 {
   pr_info("%s initalize", DRIVER_NAME);
