@@ -12,10 +12,34 @@
 #define OK 0
 #define DRIVER_NAME "nrf24l01"
 
+#define SPI_MAX_SPEED (1000000)
+#define SPI_MODE (SPI_MODE_3)
+
 static int spi_busnum = 0;
 static int spi_cs_pin = 0;
 module_param(spi_busnum, int, S_IRUSR | S_IRGRP | S_IROTH);
 module_param(spi_cs_pin, int, S_IRUSR | S_IRGRP | S_IROTH);
+
+static struct spi_board_info nrf24l01_board_info = {
+    .modalias = DRIVER_NAME,
+    .max_speed_hz = SPI_MAX_SPEED,
+    .mode = SPI_MODE,
+};
+
+static struct spi_device_id nrf24l01_id[] = {
+    {DRIVER_NAME, 0},
+    {},
+};
+MODULE_DEVICE_TABLE(spi, nrf24l01_id);
+
+static struct spi_driver nrf24l01_driver = {
+    .id_table = nrf24l01_id,
+    .driver =
+        {
+            .name = DRIVER_NAME,
+            .owner = THIS_MODULE,
+        },
+};
 
 static int remove_existing_spi_device(int bus_num, int cs_pin)
 {
@@ -47,6 +71,24 @@ static int nrf24l01_init(void)
   if (err != OK) {
     pr_err("%s: remove_existing_spi_device error", DRIVER_NAME);
     return err;
+  }
+
+  spi_register_driver(&nrf24l01_driver);
+
+  struct spi_master *master = spi_busnum_to_master(spi_busnum);
+  if (master == NULL) {
+    pr_err("%s: spi_master not found", DRIVER_NAME);
+    return -ENODEV;
+  }
+
+  nrf24l01_board_info.bus_num = spi_busnum;
+  nrf24l01_board_info.chip_select = spi_cs_pin;
+
+  struct spi_device *dev = spi_new_device(master, &nrf24l01_board_info);
+  if (dev == NULL) {
+    pr_err("%s: spi_new_device error", DRIVER_NAME);
+    spi_unregister_driver(&nrf24l01_driver);
+    return -ENODEV;
   }
 
   return 0;
