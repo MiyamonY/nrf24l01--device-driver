@@ -1,6 +1,8 @@
 KPATH := ~/linux
 TARGET := nrf24l01+.ko
 SRC := $(wildcard *.c)
+
+ccflags-y := -Wno-declaration-after-statement
 obj-m := nrf24l01+.o
 
 .DEFAULT: all
