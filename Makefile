@@ -1,12 +1,13 @@
 KPATH := ~/linux
 TARGET := nrf24l01+.ko
+SRC := $(wildcard *.c)
 obj-m := nrf24l01+.o
 
 .DEFAULT: all
 
 all: $(TARGET)
 
-$(TARGET):
+$(TARGET): $(SRC)
 	make -C $(KPATH) M=$(PWD) modules
 
 ins:
