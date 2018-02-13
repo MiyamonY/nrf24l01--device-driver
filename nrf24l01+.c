@@ -14,6 +14,9 @@
 
 #define SPI_MAX_SPEED (1000000)
 #define SPI_MODE (SPI_MODE_3)
+#define SPI_BITS_PER_WORD 8
+
+static int nrf24l01_probe(struct spi_device *spi);
 
 static int spi_busnum = 0;
 static int spi_cs_pin = 0;
@@ -39,9 +42,25 @@ static struct spi_driver nrf24l01_driver = {
             .name = DRIVER_NAME,
             .owner = THIS_MODULE,
         },
+    .probe = nrf24l01_probe,
 };
 
 static struct spi_device *nrf24l01_device;
+
+static int nrf24l01_probe(struct spi_device *spi)
+{
+  pr_info("%s: probe", DRIVER_NAME);
+  spi->max_speed_hz = nrf24l01_board_info.max_speed_hz;
+  spi->mode = nrf24l01_board_info.mode;
+  spi->bits_per_word = SPI_BITS_PER_WORD;
+
+  if (spi_setup(spi)) {
+    pr_err("%s: spi_setup error", DRIVER_NAME);
+    return -ENODEV;
+  }
+
+  return 0;
+}
 
 static int remove_existing_spi_device(int bus_num, int cs_pin)
 {
