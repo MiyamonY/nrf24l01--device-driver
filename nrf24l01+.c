@@ -15,6 +15,7 @@
 #define SPI_MAX_SPEED (1000000)
 #define SPI_MODE (SPI_MODE_3)
 #define SPI_BITS_PER_WORD 8
+#define SPI_BUF_SIZE 128
 
 static int nrf24l01_probe(struct spi_device *spi);
 
@@ -46,6 +47,32 @@ static struct spi_driver nrf24l01_driver = {
 };
 
 static struct spi_device *nrf24l01_device;
+
+static struct nrf24l01_drv_data_t {
+  struct spi_device *spi;
+  struct mutex lock;
+  unsigned char tx[SPI_BUF_SIZE] ____cacheline_aligned;
+  unsigned char rx[SPI_BUF_SIZE] ____cacheline_aligned;
+  struct spi_transfer xfer ____cacheline_aligned;
+  struct spi_message msg ____cacheline_aligned;
+} nrf24l01_drv_data;
+
+typedef addr_t unsinged char;
+
+static void nrf24l01_spi_transfer(unsigned char txbuf[], unsigned char rxbuf[], size_t len)
+{
+  struct spi_tranxfer xfer[1];
+  xfer[0].rx_buf = rxbuf;
+  xfer[0].tx_buf = rxbuf;
+  xfer[0].len = len;
+
+  spi_sync_transfer(nrf24l01_device, xfer, 1);
+}
+
+static void nrf24l01_write_to_register(addr_t addr, unsigned char regs[], size_t len)
+{
+  nrf24l01_spi_transfer(addr, NULL, len);
+}
 
 static int nrf24l01_probe(struct spi_device *spi)
 {
